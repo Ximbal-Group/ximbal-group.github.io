@@ -287,6 +287,53 @@
       .xcnt__hl { font-size: 2rem; }
       .xabout__g { gap: 36px; }
     }
+
+    /* ── Breadcrumb ─────────────────────────────────────────────────────────── */
+    .xbread {
+      position: fixed;
+      top: 76px;
+      left: 0; right: 0;
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 24px;
+      background: rgba(10,10,10,0.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.45);
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    body.v-luminous .xbread {
+      background: rgba(255,255,255,0.85);
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+      color: rgba(26,26,26,0.45);
+    }
+    .xbread--hidden { opacity: 0; pointer-events: none; transform: translateY(-4px); }
+    .xbread__home {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--logo-col);
+      text-decoration: none;
+      font-weight: 600;
+      transition: opacity 150ms;
+    }
+    .xbread__home:hover { opacity: 0.75; }
+    .xbread__icon { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; }
+    .xbread__sep { color: rgba(255,255,255,0.25); user-select: none; }
+    body.v-luminous .xbread__sep { color: rgba(26,26,26,0.25); }
+    .xbread__current {
+      color: rgba(255,255,255,0.85);
+      font-weight: 500;
+      transition: color 200ms;
+    }
+    body.v-luminous .xbread__current { color: rgba(26,26,26,0.85); }
   </style>
 </head>
 <body>
@@ -1712,6 +1759,54 @@ const XNav = ({ lang, setLang, c }) => {
 
 };
 
+/* ── Breadcrumb ──────────────────────────────────────────────────────────── */
+const SECTIONS = [
+  { id: 'home',      key: 'home'      },
+  { id: 'about',     key: 'about'     },
+  { id: 'services',  key: 'services'  },
+  { id: 'traveling', key: 'traveling' },
+  { id: 'clients',   key: 'clients'   },
+  { id: 'stories',   key: 'stories'   },
+  { id: 'contact',   key: 'contact'   },
+];
+
+const XBreadcrumb = ({ c }) => {
+  const [active, setActive] = React.useState('home');
+  const [hidden, setHidden] = React.useState(true);
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      setHidden(window.scrollY < 80);
+      const mid = window.scrollY + window.innerHeight * 0.35;
+      let current = 'home';
+      for (const { id } of SECTIONS) {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= mid) current = id;
+      }
+      setActive(current);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const label = c.breadcrumb?.[active] ?? (active.charAt(0).toUpperCase() + active.slice(1));
+
+  return (
+    <nav className={`xbread${hidden ? ' xbread--hidden' : ''}`} aria-label="breadcrumb">
+      <a href="#home" className="xbread__home">
+        <svg className="xbread__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" style={{width:16,height:16,flexShrink:0}}><path d="M10 2L2 9h2v9h5v-5h2v5h5V9h2L10 2z" fill="currentColor"/></svg>
+        Ximbal
+      </a>
+      {active !== 'home' && (
+        <>
+          <span className="xbread__sep" aria-hidden="true">›</span>
+          <span className="xbread__current">{label}</span>
+        </>
+      )}
+    </nav>
+  );
+};
+
 /* ── Hero ────────────────────────────────────────────────────────────────── */
 const XHero = ({ c }) => {
   const C = c.hero;
@@ -2032,6 +2127,7 @@ Object.assign(window, { Ornament, XNav, XHero, XAbout, XServices, XTraveling, XC
         return (
           <React.Fragment>
             <XNav lang={lang} setLang={setLang} c={c} />
+            <XBreadcrumb c={c} />
             <main>
               <XHero    c={c} isP={isP} />
               <XAbout   c={c} />
